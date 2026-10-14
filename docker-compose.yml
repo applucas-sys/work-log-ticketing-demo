@@ -1,0 +1,56 @@
+# Internal server deployment: app + Postgres, files on a local volume.
+#   cp .env.example .env   (then set real passwords)
+#   docker compose up -d --build
+#   docker compose run --rm migrate
+# Then publish to the tailnet only:  tailscale serve --bg 3000
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-worklog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-worklog}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-worklog} -d ${POSTGRES_DB:-worklog}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-worklog}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-worklog}
+      UPLOAD_DIR: /data/uploads
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
+    volumes:
+      - uploads:/data/uploads
+    # Bound to localhost on purpose. Tailscale exposes it to the team.
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  # One-off job: docker compose run --rm migrate
+  migrate:
+    image: node:22-slim
+    working_dir: /app
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-worklog}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-worklog}
+    volumes:
+      - ./:/app
+    command: sh -c "npm ci && npx drizzle-kit migrate"
+
+volumes:
+  pgdata:
+  uploads:
