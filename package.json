@@ -30,6 +30,6 @@
     "typescript": "^5.8.0"
   },
   "engines": {
-    "node": ">=20.9"
+    "node": "22.x"
   }
 }
