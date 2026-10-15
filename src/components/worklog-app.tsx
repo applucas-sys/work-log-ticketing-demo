@@ -190,7 +190,7 @@ function Shell() {
             {!ready ? (
               <div className="sheet loading" aria-busy="true">Memuat work log...</div>
             ) : view === "dashboard" ? (
-              <DashboardView me={me} onNavigate={switchView} />
+              <DashboardView me={me} onNavigate={(v) => switchView(v as View)} />
             ) : view === "staff" ? (
               <StaffView {...viewProps} />
             ) : view === "spv" ? (
