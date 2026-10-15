@@ -6,7 +6,7 @@ import { D, dur, fmtDateTime, rp } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { Reservation } from "@/lib/types";
 import { matchesQuery, stage } from "@/lib/workflow";
-import { Empty, SearchBox } from "../bits";
+import { Empty, SearchBox, StatCards } from "../bits";
 import { IconDownload } from "../icons";
 import { TeamHead, TeamRow } from "../rows";
 import { useUi } from "../ui-context";
@@ -85,6 +85,12 @@ export function FinanceView({ query, setQuery }: { query: string; setQuery: (q: 
           Unduh CSV
         </button>
       </div>
+      <StatCards items={[
+        { n: uninvoiced.length, label: "Belum diinvoice", accent: uninvoiced.length > 0 ? "red" : undefined },
+        { n: rp(total), label: "Total piutang aktif", accent: total > 0 ? "amber" : undefined },
+        { n: rp(paidThisWeek), label: "AP dibayar minggu ini", accent: "green" },
+        { n: rp(apInProgress), label: "AP sedang dalam proses", accent: apInProgress > 0 ? "blue" : undefined },
+      ]} />
 
       <div className="bucket" role="group" aria-label="Umur sejak issued">
         {buckets.map(([k, l]) => (

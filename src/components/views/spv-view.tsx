@@ -4,7 +4,7 @@ import { useState } from "react";
 import { STAFF } from "@/lib/constants";
 import { useStore } from "@/lib/store";
 import { matchesQuery, sortWork, stage, stuckReason } from "@/lib/workflow";
-import { Empty, Legend, SearchBox, StageTag, Tabs, stop } from "../bits";
+import { Empty, Legend, SearchBox, StageTag, StatCards, Tabs, stop } from "../bits";
 import { TeamHead, TeamRow } from "../rows";
 import { useUi } from "../ui-context";
 
@@ -17,6 +17,9 @@ export function SpvView({ query, setQuery }: { query: string; setQuery: (q: stri
   const stuck = records
     .filter((r) => stuckReason(r, now))
     .sort((a, b) => Number(b.urgent) - Number(a.urgent) || a.createdAt - b.createdAt);
+
+  const allActive = records.filter((r) => stage(r) !== "done");
+  const urgentOpen = allActive.filter((r) => r.urgent).length;
 
   const team = STAFF.map((s) => {
     const m = records.filter((r) => r.staff === s && stage(r) !== "done");
@@ -50,6 +53,12 @@ export function SpvView({ query, setQuery }: { query: string; setQuery: (q: stri
         </div>
       </div>
 
+      <StatCards items={[
+        { n: stuck.length, label: "Tugas nyangkut", accent: stuck.length > 0 ? "red" : undefined },
+        { n: urgentOpen, label: "Urgent aktif", accent: urgentOpen > 0 ? "amber" : undefined },
+        { n: allActive.length, label: "Semua tugas aktif" },
+        { n: STAFF.length, label: "Staf dalam tim" },
+      ]} />
       <div className="panel">
         <table className="t">
           <thead>

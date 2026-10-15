@@ -4,7 +4,7 @@ import { useState } from "react";
 import { rp } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import { matchesQuery, sortApQueue } from "@/lib/workflow";
-import { Empty, SearchBox, Tabs } from "../bits";
+import { Empty, SearchBox, StatCards, Tabs } from "../bits";
 import { ApHead, ApRow } from "../rows";
 
 export function ApView({ query, setQuery }: { query: string; setQuery: (q: string) => void }) {
@@ -37,6 +37,12 @@ export function ApView({ query, setQuery }: { query: string; setQuery: (q: strin
           </p>
         </div>
       </div>
+      <StatCards items={[
+        { n: queue.length, label: "Menunggu dibayar", accent: queue.length > 0 ? "blue" : undefined },
+        { n: rp(total), label: "Total nominal antrian", accent: total > 0 ? "amber" : undefined },
+        { n: urgent, label: "Urgent — proses duluan", accent: urgent > 0 ? "red" : undefined },
+        { n: back.length, label: "Dikembalikan ke staf", accent: back.length > 0 ? "red" : undefined },
+      ]} />
       <div className="toolbar">
         <Tabs
           value={tab}

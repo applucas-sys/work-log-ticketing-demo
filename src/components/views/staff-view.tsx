@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { matchesQuery, needsStaffAction, sortWork, stage } from "@/lib/workflow";
-import { Empty, Legend, SearchBox, Tabs } from "../bits";
+import { Empty, Legend, SearchBox, StatCards, Tabs } from "../bits";
 import { IconPlus } from "../icons";
 import { StaffHead, StaffRow } from "../rows";
 import { useUi } from "../ui-context";
@@ -21,6 +21,8 @@ export function StaffView({ query, setQuery }: { query: string; setQuery: (q: st
   );
   const need = active.filter(needsStaffAction).length;
   const wait = active.filter((r) => stage(r) === "waitap").length;
+  const toIssue = active.filter((r) => stage(r) === "toissue").length;
+  const toInvoice = active.filter((r) => stage(r) === "toinvoice").length;
   const name = me.charAt(0) + me.slice(1).toLowerCase();
 
   return (
@@ -38,6 +40,12 @@ export function StaffView({ query, setQuery }: { query: string; setQuery: (q: st
           Entri baru
         </button>
       </div>
+      <StatCards items={[
+        { n: need, label: "Perlu tindakan kamu", accent: need > 0 ? "red" : undefined },
+        { n: toIssue, label: "Siap di-issue", accent: toIssue > 0 ? "blue" : undefined },
+        { n: wait, label: "Menunggu AP", accent: wait > 0 ? "amber" : undefined },
+        { n: toInvoice, label: "Siap diinvoice", accent: toInvoice > 0 ? "green" : undefined },
+      ]} />
       <div className="toolbar">
         <Tabs
           value={tab}
