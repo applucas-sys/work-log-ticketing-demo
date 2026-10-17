@@ -3,10 +3,26 @@
 import { useState } from "react";
 import { ago, rp } from "@/lib/format";
 import { useStore } from "@/lib/store";
-import type { Reservation } from "@/lib/types";
+import type { Product, Reservation } from "@/lib/types";
 import { matchesQuery, sortApQueue } from "@/lib/workflow";
 import { stop } from "../bits";
+import { IconPlane, IconTrain, IconWhoosh } from "../icons";
 import { useUi } from "../ui-context";
+
+const PROD_SHORT: Record<Product, string> = {
+  intl: "Psw. Intl",
+  dom: "Psw. Dom",
+  kai: "Kereta KAI",
+  whoosh: "Whoosh",
+};
+
+function ProdTag({ p }: { p: Product }) {
+  const icon =
+    p === "kai"   ? <IconTrain size={12} /> :
+    p === "whoosh" ? <IconWhoosh size={12} /> :
+    <IconPlane size={12} />;
+  return <span className="prod-tag" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{icon}{PROD_SHORT[p]}</span>;
+}
 
 function ApTableRow({ r }: { r: Reservation }) {
   const { openModal, openDetail } = useUi();
@@ -42,6 +58,7 @@ function ApTableRow({ r }: { r: Reservation }) {
         <div className="pax-co">{r.company}</div>
         <div className="pax-co" style={{ marginTop: 2 }}>dari {r.staff}</div>
       </td>
+      <td><ProdTag p={r.product} /></td>
       <td>
         <div className="route-main">{r.vendor}</div>
         <div className="route-sub"><span className="code">{r.pnr}</span> · {r.route}</div>
@@ -84,11 +101,6 @@ export function ApView({ query, setQuery }: { query: string; setQuery: (q: strin
       <div className="view-head">
         <div className="grow">
           <h1>Permintaan Pembayaran AP</h1>
-          <p>
-            {queue.length
-              ? <><b>{queue.length}</b> menunggu, total <b>{rp(total)}</b>{urgent > 0 ? <> — <b className="text-urgent">{urgent} urgent</b></> : ""}.</>
-              : "Antrian kosong."}
-          </p>
         </div>
       </div>
 
@@ -129,16 +141,18 @@ export function ApView({ query, setQuery }: { query: string; setQuery: (q: strin
       <div className="table-wrap">
         <table className="tk">
           <colgroup>
-            <col style={{ width: "25%" }} />
-            <col style={{ width: "20%" }} />
             <col style={{ width: "22%" }} />
-            <col style={{ width: "12%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "20%" }} />
             <col style={{ width: "11%" }} />
             <col style={{ width: "10%" }} />
+            <col style={{ width: "9%" }} />
           </colgroup>
           <thead>
             <tr>
               <th>Pax / Perusahaan / Peminta</th>
+              <th>Produk</th>
               <th>Vendor &amp; PNR</th>
               <th>Transfer Ke</th>
               <th className="tr">Nominal</th>

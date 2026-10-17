@@ -123,6 +123,8 @@ const SPECS: SeedSpec[] = [
   { staff: "NIKITA", co: "Yayasan Cahaya Bangsa", pax: ["JOHAN SATRIA"], p: "dom", v: "US Direct", c: "JT", pnr: "GFQFKJ", route: "CGK-UPG", amt: 2340000, pay: "ap", urgent: true, age: 1.1 * H, ttl: 1.5 * H },
   { staff: "NUY", co: "PT Arka Mandiri", pax: ["RYAN ARIFIN"], p: "dom", v: "Wisman", c: "GA", pnr: "EFJ7QL", route: "CGK-KOE", amt: 3980000, pay: "credit", age: 4.2 * D, issued: 4 * D },
   { staff: "NUY", co: "PT Kirana Logistik", pax: ["PRAMUDYA SAPUTRO"], p: "dom", v: "Wisman", c: "QG", pnr: "ZKPQKA", route: "CGK-PDG", amt: 1560000, pay: "credit", age: 3 * D, issued: 3 * D, inv: 2.5 * D },
+  { staff: "RIAN", co: "PT Mitra Tambang Utama", pax: ["BUDI SANTOSO", "TEGUH WALUYO"], p: "kai", v: "Jontru", c: "KAI", pnr: "8823QKA", route: "GMR-SDT", amt: 1840000, pay: "ap", age: 3 * H, ttl: 8 * H },
+  { staff: "KEN", co: "PT Seraya Energi", pax: ["RANI PUSPITA"], p: "whoosh", v: "KCIC", c: "Whoosh", pnr: "WH10047", route: "HLM-TGL", amt: 450000, pay: "ap", urgent: true, age: 45 * M, ttl: 2 * H, note: "Berangkat sore ini, mohon segera diproses" },
 ];
 
 export const SEED_START_SEQ = 1860;
