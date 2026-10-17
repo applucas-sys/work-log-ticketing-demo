@@ -106,23 +106,19 @@ export function StaffView({
 
   return (
     <>
-      <div className="view-head">
-        <div className="grow">
-          <h1>Work Log</h1>
+      <div className="view-head" style={{ alignItems: "center" }}>
+        <h1 style={{ margin: 0 }}>Work Log</h1>
+        <div className="staff-sel-row" style={{ margin: 0 }}>
+          Masuk sebagai
+          <select
+            className="staff-sel"
+            value={me}
+            onChange={(e) => { setMe(e.target.value); setQuery(""); }}
+            aria-label="Pilih staf"
+          >
+            {STAFF.map((s) => <option key={s} value={s}>{cap(s)}</option>)}
+          </select>
         </div>
-      </div>
-
-      {/* Staff selector */}
-      <div className="staff-sel-row">
-        Masuk sebagai
-        <select
-          className="staff-sel"
-          value={me}
-          onChange={(e) => { setMe(e.target.value); setQuery(""); }}
-          aria-label="Pilih staf"
-        >
-          {STAFF.map((s) => <option key={s} value={s}>{cap(s)}</option>)}
-        </select>
       </div>
 
       {/* Active / Archive tabs */}
