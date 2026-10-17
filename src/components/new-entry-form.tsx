@@ -50,7 +50,6 @@ export function NewEntryForm() {
   const [acct, setAcct] = useState(VENDORS[vendor].acct);
   const [acctName, setAcctName] = useState(VENDORS[vendor].name);
   const [note, setNote] = useState("");
-  const [urgent, setUrgent] = useState(false);
   const [errors, setErrors] = useState<Set<Field>>(new Set());
 
   const clearErr = (f: Field) => setErrors((e) => { const n = new Set(e); n.delete(f); return n; });
@@ -138,7 +137,7 @@ export function NewEntryForm() {
         ttl: ttl ? new Date(ttl).getTime() : null,
         amount: amt,
         pay,
-        urgent,
+        urgent: false,
         bank,
         acct,
         acctName,
@@ -150,7 +149,7 @@ export function NewEntryForm() {
     closeDrawer();
     toast(
       pay === "ap"
-        ? `Permintaan${urgent ? " urgent" : ""} dikirim ke AP. Kamu akan lihat kotak hijau saat sudah dibayar.`
+        ? `Permintaan dikirim ke AP. Kamu akan lihat kotak hijau saat sudah dibayar.`
         : "Entri disimpan. Tandai issued setelah tiket keluar.",
     );
   };
@@ -292,11 +291,6 @@ export function NewEntryForm() {
               <input className="inp" id="acctName" value={acctName} onChange={(e) => setAcctName(e.target.value)} />
               <div className="hint">Terisi otomatis dari data vendor. Ubah kalau vendor minta ke rekening lain.</div>
             </div>
-            <label className="switch">
-              <input type="checkbox" checked={urgent} onChange={(e) => setUrgent(e.target.checked)} />
-              <span><b className="text-urgent">Urgent</b>, taruh di paling atas antrian AP</span>
-            </label>
-            <div style={{ height: 12 }} />
           </div>
         )}
       </form>
