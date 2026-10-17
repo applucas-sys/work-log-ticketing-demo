@@ -6,7 +6,6 @@ import { rp } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { Reservation } from "@/lib/types";
 import { matchesQuery, sortWork, stage, stuckReason } from "@/lib/workflow";
-import { stop } from "../bits";
 import { useUi } from "../ui-context";
 
 const PROD_LABEL: Record<string, string> = {
@@ -28,8 +27,7 @@ function nextStep(r: Reservation, now: number): { text: string; cls: string } {
 }
 
 function TeamTableRow({ r, now }: { r: Reservation; now: number }) {
-  const { openDetail, toast } = useUi();
-  const { actions } = useStore();
+  const { openDetail } = useUi();
   const s = stage(r);
   const stuck = s !== "done" ? stuckReason(r, now) : "";
   const paxName = r.pax[0] ?? r.company;
@@ -66,17 +64,6 @@ function TeamTableRow({ r, now }: { r: Reservation; now: number }) {
           <div className={"sbox" + (r.issuedAt ? " done" : "")}>ISS<span className="mk">{r.issuedAt ? "✓" : "—"}</span></div>
           <div className={"sbox" + (r.invoicedAt ? " done" : "")}>INV<span className="mk">{r.invoicedAt ? "✓" : "—"}</span></div>
         </div>
-      </td>
-      <td className="tc" onClick={(e) => e.stopPropagation()}>
-        {stuck ? (
-          <button
-            className="btn-act sec"
-            style={{ fontSize: 10 }}
-            onClick={(e) => { stop(e); actions.log(r.id, "SPV", "Mengirim pengingat"); toast(`Pengingat dikirim ke ${r.staff}.`); }}
-          >
-            Ingatkan
-          </button>
-        ) : null}
       </td>
     </tr>
   );
@@ -168,13 +155,12 @@ export function SpvView({ query, setQuery }: { query: string; setQuery: (q: stri
       <div className="table-wrap">
         <table className="tk">
           <colgroup>
-            <col style={{ width: "8%" }} />
-            <col style={{ width: "28%" }} />
-            <col style={{ width: "10%" }} />
-            <col style={{ width: "16%" }} />
-            <col style={{ width: "12%" }} />
-            <col style={{ width: "15%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "31%" }} />
             <col style={{ width: "11%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "17%" }} />
           </colgroup>
           <thead>
             <tr>
@@ -184,7 +170,6 @@ export function SpvView({ query, setQuery }: { query: string; setQuery: (q: stri
               <th>Rute / Kode</th>
               <th className="tr">Nominal</th>
               <th className="tc">Status (AP · ISS · INV)</th>
-              <th className="tc">Aksi</th>
             </tr>
           </thead>
           <tbody>
