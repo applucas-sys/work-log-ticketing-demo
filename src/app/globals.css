@@ -398,10 +398,128 @@
     .roles button { padding: 8px 9px; }
     .btn-new { padding: 9px 12px; }
   }
-  @media (max-width: 650px) {
-    .content { padding: 14px 12px 60px; }
-    table.tk { min-width: 700px; }
-    .filter-search { width: 100%; }
-    .roles button:nth-child(4) { display: none; }
+
+  @media (max-width: 700px) {
+    /* Topbar: hide role tabs, tighten spacing */
+    .topbar { padding: 0 12px; gap: 10px; height: 50px; }
+    .roles { display: none; }
+    .btn-new { padding: 8px 13px; font-size: 12px; }
+    .brand { font-size: 13px; }
+    .brand small { display: none; }
+
+    /* Content */
+    .content { padding: 14px 13px 60px; }
+    .mock-note { padding: 0 13px 24px; }
+    .view-head { margin-bottom: 10px; gap: 8px; }
+    .view-head h1 { font-size: 18px; }
+
+    /* Stats: 2 per row */
+    .stats { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .stat { padding: 10px 12px; }
+    .stat-n { font-size: 20px; }
+
+    /* Filters: stack vertically */
+    .filters { flex-direction: column; gap: 8px; }
+    .filter-search, .filter-select { width: 100%; height: 34px; }
+
+    /* Staff pills: tighter */
+    .staff-pills { gap: 5px; margin-bottom: 10px; }
+    .staff-pill { font-size: 10px; padding: 4px 9px; }
+
+    /* Bucket */
+    .bucket button { padding: 5px 10px; font-size: 11px; }
+
+    /* ── Table → mobile card layout ────────────────── */
+    .table-wrap { overflow: visible; }
+    table.tk { min-width: 0; table-layout: auto; }
+    table.tk colgroup, table.tk thead { display: none; }
+    table.tk tbody { display: block; }
+    table.tk tbody tr {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+      background: var(--white);
+    }
+    table.tk tbody tr:last-child { border-bottom: 0; }
+    table.tk tbody tr:hover td { background: transparent; }
+
+    /* Urgent left stripe via row border instead of td box-shadow */
+    table.tk tbody tr.urgent td:first-child { box-shadow: none; }
+    table.tk tbody tr.urgent { border-left: 4px solid var(--pink); }
+
+    /* All cells: block, centered by default */
+    table.tk td {
+      display: block;
+      min-width: 0;
+      padding: 4px 14px;
+      border: 0;
+      text-align: center !important;
+      vertical-align: top;
+    }
+
+    /* Passenger/company cell — left-aligned, right-padded for status boxes */
+    table.tk td:has(.pax-name) {
+      padding: 12px 114px 0 14px;
+      text-align: left !important;
+      min-height: 58px;
+    }
+
+    /* Status boxes (AP · ISS · INV) — absolute top-right of card */
+    table.tk td:has(.sboxes) {
+      position: absolute;
+      top: 12px;
+      right: 8px;
+      width: auto;
+      padding: 0;
+    }
+    table.tk td:has(.sboxes) .sboxes { gap: 4px; }
+    table.tk td:has(.sboxes) .sbox { width: 30px; height: 33px; font-size: 8px; }
+    table.tk td:has(.sboxes) .sbox .mk { font-size: 10px; }
+
+    /* Product tag */
+    table.tk td:has(.prod-tag) { padding-top: 8px; padding-bottom: 0; }
+
+    /* Route / vendor cell */
+    table.tk td:has(.route-main) { padding-top: 6px; padding-bottom: 0; }
+    table.tk td:has(.route-main) .route-main { font-size: 12px; }
+
+    /* Amount */
+    table.tk td:has(.amt) { padding-top: 6px; padding-bottom: 0; }
+
+    /* Action button(s) — full-width at bottom of card */
+    table.tk td:has(.btn-act) { padding: 14px 14px 2px; }
+    table.tk td:has(.btn-act) .btn-act {
+      display: block;
+      width: 100%;
+      text-align: center;
+      min-height: 34px;
+      margin-bottom: 4px;
+    }
+
+    /* Staff name label (SPV / Finance first-col): td with a single span child, no other recognised content */
+    table.tk td:has(> span:only-child):not(:has(.pax-name)):not(:has(.sboxes)):not(:has(.prod-tag)):not(:has(.route-main)):not(:has(.amt)):not(:has(.btn-act)) {
+      padding: 8px 14px 0;
+      text-align: left !important;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Done-row muted color still cascades */
+    table.tk tbody tr.done-row td { color: var(--muted); }
+
+    /* View tabs: slightly smaller */
+    .view-tabs button { padding: 7px 13px 9px; font-size: 12px; }
+  }
+
+  @media (max-width: 360px) {
+    table.tk td:has(.pax-name) { padding-right: 104px; }
+    table.tk td:has(.sboxes) { right: 4px; }
+    table.tk td:has(.sboxes) .sbox { width: 28px; }
+    .stat-n { font-size: 17px; }
   }
 }
