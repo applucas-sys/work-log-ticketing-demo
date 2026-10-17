@@ -105,9 +105,14 @@ export const IconTrain = ({ size = 14 }: P) => (
 );
 export const IconWhoosh = ({ size = 14 }: P) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-    <path d="M2 15h3l2-8h10l3 5H5" strokeLinejoin="round" />
-    <circle cx="7.5" cy="17.5" r="1.5" />
-    <circle cx="16.5" cy="17.5" r="1.5" />
-    <path d="M1 11h3M1 13h2" strokeLinecap="round" />
+    {/* Shinkansen / kereta cepat: aerodynamic bullet nose pointing right */}
+    <path d="M2 8h13l7 4-7 4H2V8z" strokeLinejoin="round" />
+    {/* Windows */}
+    <path d="M6 12h1.5M10 12h1.5M14 12h0.5" strokeLinecap="round" strokeWidth={1.5} />
+    {/* Wheels */}
+    <circle cx="5.5" cy="18" r="1.5" />
+    <circle cx="14" cy="18" r="1.5" />
+    {/* Rail */}
+    <path d="M1 20.5h22" strokeLinecap="round" strokeWidth={1} />
   </svg>
 );

@@ -6,14 +6,19 @@ import { rp } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { Reservation } from "@/lib/types";
 import { matchesQuery, sortWork, stage, stuckReason } from "@/lib/workflow";
+import { IconPlane, IconTrain, IconWhoosh } from "../icons";
 import { useUi } from "../ui-context";
 
-const PROD_LABEL: Record<string, string> = {
-  intl: "✈ Psw. Intl",
-  dom: "✈ Psw. Dom",
-  kai: "▣ Kereta API",
-  whoosh: "▣ Whoosh",
+const PROD_SHORT: Record<string, string> = {
+  intl: "Psw. Intl", dom: "Psw. Dom", kai: "Kereta KAI", whoosh: "Whoosh",
 };
+function ProdTag({ p }: { p: string }) {
+  const icon =
+    p === "kai"    ? <IconTrain size={12} /> :
+    p === "whoosh" ? <IconWhoosh size={12} /> :
+                     <IconPlane size={12} />;
+  return <span className="prod-tag" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{icon}{PROD_SHORT[p] ?? p}</span>;
+}
 
 function nextStep(r: Reservation, now: number): { text: string; cls: string } {
   const s = stage(r);
@@ -46,7 +51,7 @@ function TeamTableRow({ r, now }: { r: Reservation; now: number }) {
         </div>
         <div className="pax-co">{r.company}</div>
       </td>
-      <td><span className="prod-tag">{PROD_LABEL[r.product] ?? r.product}</span></td>
+      <td><ProdTag p={r.product} /></td>
       <td>
         <div className="route-main">{r.route || "—"}</div>
         <div className="route-sub">{r.pnr} ({r.carrier})</div>
