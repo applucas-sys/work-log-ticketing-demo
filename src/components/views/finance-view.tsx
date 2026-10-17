@@ -6,9 +6,7 @@ import { D, dur, fmtDateTime, rp } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { Reservation } from "@/lib/types";
 import { matchesQuery, stage } from "@/lib/workflow";
-import { Empty, SearchBox } from "../bits";
 import { IconDownload } from "../icons";
-import { TeamHead, TeamRow } from "../rows";
 import { useUi } from "../ui-context";
 
 type Bucket = "all" | "0" | "1" | "3";
@@ -21,14 +19,14 @@ function downloadCsv(rows: Reservation[]) {
   ]);
   const csv = [head, ...body].map((row) => row.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(",")).join("\n");
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
+  a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
   a.download = "belum-invoice.csv";
   a.click();
 }
 
 export function FinanceView({ query, setQuery }: { query: string; setQuery: (q: string) => void }) {
   const { records, now } = useStore();
-  const { toast } = useUi();
+  const { toast, openDetail } = useUi();
   const [bucket, setBucket] = useState<Bucket>("all");
 
   const age = (r: Reservation) => now - (r.issuedAt ?? now);
@@ -38,54 +36,83 @@ export function FinanceView({ query, setQuery }: { query: string; setQuery: (q: 
   };
 
   const uninvoiced = records.filter((r) => stage(r) === "toinvoice");
-  const list = uninvoiced.filter((r) => inBucket(r, bucket) && matchesQuery(r, query)).sort((a, b) => (a.issuedAt ?? 0) - (b.issuedAt ?? 0));
-  const total = uninvoiced.reduce((s, r) => s + r.amount, 0);
-  const oldest = uninvoiced.length ? Math.max(...uninvoiced.map(age)) : 0;
+  const list = uninvoiced
+    .filter((r) => inBucket(r, bucket) && matchesQuery(r, query))
+    .sort((a, b) => (a.issuedAt ?? 0) - (b.issuedAt ?? 0));
+
+  const total    = uninvoiced.reduce((s, r) => s + r.amount, 0);
+  const oldest   = uninvoiced.length ? Math.max(...uninvoiced.map(age)) : 0;
+  const paidWeek = records.filter((r) => r.ap?.status === "paid" && r.ap.paidAt && now - r.ap.paidAt < 7 * D).reduce((s, r) => s + r.amount, 0);
+  const apProc   = records.filter((r) => r.ap && r.ap.status !== "paid" && !r.issuedAt).reduce((s, r) => s + r.amount, 0);
 
   const byCompany = new Map<string, { n: number; sum: number; old: number; staff: Set<string> }>();
   for (const r of list) {
     const c = byCompany.get(r.company) ?? { n: 0, sum: 0, old: 0, staff: new Set<string>() };
-    c.n++;
-    c.sum += r.amount;
-    c.old = Math.max(c.old, age(r));
-    c.staff.add(r.staff);
+    c.n++; c.sum += r.amount; c.old = Math.max(c.old, age(r)); c.staff.add(r.staff);
     byCompany.set(r.company, c);
   }
   const companies = [...byCompany.entries()].sort((a, b) => b[1].sum - a[1].sum);
 
-  const paidThisWeek = records.filter((r) => r.ap?.status === "paid" && r.ap.paidAt && now - r.ap.paidAt < 7 * D).reduce((s, r) => s + r.amount, 0);
-  const apInProgress = records.filter((r) => r.ap && r.ap.status !== "paid" && !r.issuedAt).reduce((s, r) => s + r.amount, 0);
-
   const buckets: [Bucket, string][] = [
     ["all", "Semua"],
-    ["0", "Kurang dari 1 hari"],
-    ["1", "1 sampai 3 hari"],
-    ["3", "Lebih dari 3 hari"],
+    ["0", "< 1 hari"],
+    ["1", "1–3 hari"],
+    ["3", "> 3 hari"],
   ];
 
   return (
     <>
-      <div className="head">
+      <div className="view-head">
         <div className="grow">
-          <h1>Tiket issued belum diinvoice</h1>
+          <h1>Tiket Issued — Belum Diinvoice</h1>
           <p>
-            <b>{uninvoiced.length}</b> reservasi senilai <b>{rp(total)}</b> sudah issued tapi belum ditagihkan ke customer
-            {uninvoiced.length > 0 && <>, paling lama {dur(oldest)}</>}. Minggu ini AP sudah membayar <b>{rp(paidThisWeek)}</b> ke vendor, dan{" "}
-            <b>{rp(apInProgress)}</b> masih dalam proses.
+            <b>{uninvoiced.length}</b> reservasi senilai <b>{rp(total)}</b> sudah issued
+            {uninvoiced.length > 0 && <>, paling lama <b>{dur(oldest)}</b></>}.
           </p>
         </div>
-        <button
-          className="btn"
-          onClick={() => {
-            downloadCsv(uninvoiced);
-            toast("CSV belum invoice diunduh.");
-          }}
-        >
-          <IconDownload />
-          Unduh CSV
+        <button className="btn" onClick={() => { downloadCsv(uninvoiced); toast("CSV belum invoice diunduh."); }}>
+          <IconDownload /> Unduh CSV
         </button>
       </div>
 
+      {/* Stats */}
+      <div className="stats">
+        <div className="stat"><div className={"stat-n" + (uninvoiced.length > 0 ? " red" : "")}>{uninvoiced.length}</div><div className="stat-label">Belum diinvoice</div></div>
+        <div className="stat"><div className={"stat-n" + (total > 0 ? " amber" : "")} style={{ fontSize: 16 }}>{rp(total)}</div><div className="stat-label">Total piutang aktif</div></div>
+        <div className="stat"><div className="stat-n green" style={{ fontSize: 16 }}>{rp(paidWeek)}</div><div className="stat-label">AP dibayar minggu ini</div></div>
+        <div className="stat"><div className={"stat-n" + (apProc > 0 ? " blue" : "")} style={{ fontSize: 16 }}>{rp(apProc)}</div><div className="stat-label">AP sedang dalam proses</div></div>
+      </div>
+
+      {/* Per-company panel */}
+      {companies.length > 0 && (
+        <div className="panel">
+          <h2>Per Perusahaan</h2>
+          <table className="t">
+            <thead>
+              <tr>
+                <th>Perusahaan</th>
+                <th className="num">Reservasi</th>
+                <th className="num">Nilai</th>
+                <th className="num">Paling Lama</th>
+                <th>Staf</th>
+              </tr>
+            </thead>
+            <tbody>
+              {companies.map(([name, c]) => (
+                <tr key={name} className="click" onClick={() => setQuery(name)}>
+                  <td><b>{name}</b></td>
+                  <td className="num">{c.n}</td>
+                  <td className="num amt">{rp(c.sum)}</td>
+                  <td className="num">{c.old > 3 * D ? <span className="tag red">{dur(c.old)}</span> : dur(c.old)}</td>
+                  <td>{[...c.staff].join(", ")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Bucket filter */}
       <div className="bucket" role="group" aria-label="Umur sejak issued">
         {buckets.map(([k, l]) => (
           <button key={k} aria-pressed={bucket === k} onClick={() => setBucket(k)}>
@@ -94,56 +121,74 @@ export function FinanceView({ query, setQuery }: { query: string; setQuery: (q: 
         ))}
       </div>
 
-      <div className="panel">
-        <h2>Per perusahaan</h2>
-        <table className="t">
+      {/* Search */}
+      <div className="filters">
+        <input
+          className="filter-search"
+          type="search"
+          placeholder="⌕  Cari perusahaan, pax, PNR…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+
+      {/* Table */}
+      <div className="table-wrap">
+        <table className="tk">
+          <colgroup>
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "28%" }} />
+            <col style={{ width: "11%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "11%" }} />
+          </colgroup>
           <thead>
             <tr>
-              <th>Perusahaan</th>
-              <th className="num">Reservasi</th>
-              <th className="num">Nilai</th>
-              <th className="num">Paling lama</th>
               <th>Staf</th>
+              <th>Penumpang / Perusahaan</th>
+              <th>Produk</th>
+              <th>Rute / Kode</th>
+              <th className="tr">Nilai</th>
+              <th>Issued</th>
+              <th className="tc">Status</th>
             </tr>
           </thead>
           <tbody>
-            {companies.map(([name, c]) => (
-              <tr key={name} className="click" onClick={() => setQuery(name)}>
-                <td><b>{name}</b></td>
-                <td className="num">{c.n}</td>
-                <td className="num amt">{rp(c.sum)}</td>
-                <td className="num">{c.old > 3 * D ? <span className="tag red">{dur(c.old)}</span> : dur(c.old)}</td>
-                <td>{[...c.staff].join(", ")}</td>
+            {list.map((r) => (
+              <tr key={r.id} className="click" onClick={() => openDetail(r.id)}>
+                <td><span style={{ fontWeight: 800, fontSize: 12 }}>{r.staff}</span></td>
+                <td>
+                  <div className="pax-name">{r.pax[0] ?? r.company}{r.pax.length > 1 ? ` +${r.pax.length - 1}` : ""}</div>
+                  <div className="pax-co">{r.company}</div>
+                </td>
+                <td><span className="prod-tag">{PRODUCTS[r.product]}</span></td>
+                <td>
+                  <div className="route-main">{r.route || "—"}</div>
+                  <div className="route-sub">{r.pnr} ({r.carrier})</div>
+                </td>
+                <td className="tr"><span className="amt">{rp(r.amount)}</span></td>
+                <td>
+                  <div style={{ fontSize: 12 }}>{r.issuedAt ? fmtDateTime(r.issuedAt) : "—"}</div>
+                  {r.issuedAt && <div className="route-sub">{dur(age(r))} lalu</div>}
+                </td>
+                <td className="tc">
+                  <div className="sboxes">
+                    <div className="sbox done">ISS<span className="mk">✓</span></div>
+                    <div className="sbox">INV<span className="mk">—</span></div>
+                  </div>
+                </td>
               </tr>
             ))}
-            {companies.length === 0 && (
-              <tr>
-                <td colSpan={5} className="muted">Tidak ada data di rentang ini.</td>
-              </tr>
-            )}
           </tbody>
         </table>
-      </div>
-
-      <div className="toolbar">
-        <SearchBox value={query} onChange={setQuery} placeholder="Cari perusahaan, pax, PNR" />
-      </div>
-      <div className="sheet">
-        <TeamHead statusLabel="Issued" timeLabel="" />
-        {list.map((r) => (
-          <TeamRow
-            key={r.id}
-            r={r}
-            showAge={false}
-            extra={
-              <>
-                <div>{r.issuedAt ? fmtDateTime(r.issuedAt) : ""}</div>
-                <div className="sub">{dur(age(r))} lalu</div>
-              </>
-            }
-          />
-        ))}
-        {list.length === 0 && <Empty title="Semua sudah diinvoice">Tidak ada piutang yang tertinggal di rentang ini.</Empty>}
+        {list.length === 0 && (
+          <div className="empty">
+            <b>Semua sudah diinvoice</b>
+            Tidak ada piutang yang tertinggal di rentang ini.
+          </div>
+        )}
       </div>
     </>
   );
