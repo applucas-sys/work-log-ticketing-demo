@@ -106,6 +106,8 @@ const SPECS: SeedSpec[] = [
   { staff: "DAVID", co: "Bank Nusantara Persada", pax: ["HENDRA WIBOWO"], p: "dom", v: "Wisman", c: "GA", pnr: "4TRZLP", route: "CGK-DPS", amt: 3420000, pay: "credit", age: 6 * H, issued: 5 * H },
   { staff: "DAVID", co: "PT Arka Mandiri", pax: ["YOGA PRATAMA", "DEWI LESTARI", "FAJAR NUGROHO"], p: "dom", v: "US Direct", c: "QG", pnr: "XWPLNA", route: "CGK-KNO", amt: 4275000, pay: "ap", age: 3 * H, ttl: 9 * H, apPaid: 40 * M },
   { staff: "DAVID", co: "PT Seraya Energi", pax: ["MARIA SIMANJUNTAK"], p: "intl", v: "Avia", c: "NH", pnr: "JC7H2Q", route: "CGK-HND", amt: 21300000, pay: "credit", age: 2 * D + 3 * H, issued: 2 * D },
+  { staff: "DAVID", co: "PT Kirana Logistik", pax: ["SURYA DHARMA", "FAISAL AKBAR"], p: "kai", v: "Jontru", c: "KAI", pnr: "9914QKB", route: "GMR-YK", amt: 1560000, pay: "credit", age: 4 * H, travelIn: 1 * D },
+  { staff: "DAVID", co: "Bank Nusantara Persada", pax: ["CITRA DEWI"], p: "whoosh", v: "KCIC", c: "Whoosh", pnr: "WH20831", route: "HLM-TGL", amt: 380000, pay: "credit", age: 2 * H, ttl: 3 * H, travelIn: 5 * H, urgent: true },
   { staff: "DAVID", co: "PT Arka Mandiri", pax: ["BAMBANG SUTRISNO"], p: "dom", v: "Wisman", c: "GA", pnr: "5NJQKR", route: "CGK-JOG", amt: 1890000, pay: "credit", age: 3 * D, issued: 3 * D - H, inv: 2 * D },
   { staff: "DAVID", co: "Yayasan Cahaya Bangsa", pax: ["DITA AYUNINGTYAS"], p: "intl", v: "Wisman", c: "CZ", pnr: "JCRMTL", route: "CGK-CAN", amt: 8760000, pay: "ap", age: 4 * D, apPaid: 4 * D - 2 * H, issued: 4 * D - 3 * H, inv: 3 * D },
   { staff: "AFIA", co: "PT Mitra Tambang Utama", pax: ["BAGUS SETIAWAN", "LINDA HARTONO"], p: "intl", v: "Wisman", c: "CX", pnr: "JBM4QX", route: "CGK-HKG", amt: 18640000, pay: "ap", age: 3.6 * H, ttl: 20 * H },
