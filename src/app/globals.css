@@ -336,7 +336,7 @@
   .file svg { flex: none; color: var(--muted); }
   .note { background: #fef3c7; color: #92400e; border: 1.5px solid #fcd34d; padding: 10px 12px; font-size: 13px; margin-bottom: 12px; }
   .note.red { background: #fde8ec; color: var(--pink); border-color: #f8c4d0; }
-  .copy { border: 0; background: none; color: var(--blue); font-weight: 700; font-size: 12px; padding: 0 4px; cursor: pointer; }
+  .copy { border: 1.5px solid var(--bdr); background: var(--white); color: var(--blue); font-weight: 700; font-size: 11px; padding: 1px 6px; cursor: pointer; box-shadow: 1px 1px 0 var(--bdr); vertical-align: middle; }
 
   /* ── modal ───────────────────────────────────────── */
   .modal-wrap { position: fixed; inset: 0; z-index: 60; display: none; place-items: center; padding: 16px; }

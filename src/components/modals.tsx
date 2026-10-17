@@ -24,15 +24,26 @@ export function ModalHost({ modal }: { modal: ModalState | null }) {
   }
 }
 
+const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtDateDisplay(v: string): string {
+  if (!v) return "";
+  const [y, m, d] = v.split("-");
+  if (!y || !m || !d) return v;
+  return `${y}-${MONTHS_SHORT[Number(m) - 1]}-${d}`;
+}
+
 function IssueModal({ id }: { id: string }) {
   const { get, actions } = useStore();
   const { closeModal, toast } = useUi();
   const [ticket, setTicket] = useState("");
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [issueDate, setIssueDate] = useState(todayStr);
   const r = get(id);
   if (!r) return null;
   const needsTicket = r.product !== "kai" && r.product !== "whoosh";
   const ok = () => {
-    actions.issue(id, ticket.trim());
+    const issuedAt = issueDate ? new Date(issueDate + "T00:00:00").getTime() : undefined;
+    actions.issue(id, ticket.trim(), issuedAt);
     closeModal();
     toast("Ditandai issued. Langkah berikutnya: buat invoice ke customer.");
   };
@@ -43,11 +54,15 @@ function IssueModal({ id }: { id: string }) {
       footer={<><button className="btn" onClick={closeModal}>Batal</button><button className="btn primary" onClick={ok}>Tandai issued</button></>}
     >
       <p className="muted mt4">{r.pax.join(", ")}, PNR <span className="code">{r.pnr}</span></p>
+      <div className="field">
+        <label htmlFor="idate">Tanggal issued</label>
+        <input className="inp" id="idate" type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
+        {issueDate && <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3 }} className="code">{fmtDateDisplay(issueDate)}</div>}
+      </div>
       {needsTicket && (
         <div className="field">
           <label htmlFor="tk">No. tiket</label>
           <input className="inp code" id="tk" placeholder="Boleh dikosongkan untuk LCC" value={ticket} onChange={(e) => setTicket(e.target.value)} onKeyDown={(e) => e.key === "Enter" && ok()} />
-          <div className="hint">Untuk beberapa pax, pisahkan dengan koma.</div>
         </div>
       )}
     </Modal>

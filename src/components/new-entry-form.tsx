@@ -3,6 +3,23 @@
 import { useState } from "react";
 import { CARRIERS, PRODUCTS, VENDORS, vendorsFor } from "@/lib/constants";
 import { ago, D, formatNumber } from "@/lib/format";
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtTtlDisplay(v: string): string {
+  if (!v) return "";
+  const [date, time] = v.split("T");
+  const [y, m, d] = (date ?? "").split("-");
+  if (!y || !m || !d) return v;
+  return `${y}-${MONTHS[Number(m) - 1]}-${d.padStart(2,"0")} ${time ?? ""}`;
+}
+function ttlUrgency(v: string): "red" | "amber" | null {
+  if (!v) return null;
+  const ms = new Date(v).getTime() - Date.now();
+  if (ms < 0) return "red";
+  if (ms < 60 * 60 * 1000) return "red";
+  if (ms < 3 * 60 * 60 * 1000) return "amber";
+  return null;
+}
 import { useStore } from "@/lib/store";
 import type { FileRef, PayMethod, Product } from "@/lib/types";
 import { type AcItem, useAutocomplete } from "./autocomplete";
@@ -146,7 +163,6 @@ export function NewEntryForm() {
           <label htmlFor="co">Perusahaan / klien</label>
           <input className="inp" id="co" placeholder="Ketik nama perusahaan, atau Personal" data-autofocus {...companyAc.inputProps} />
           {companyAc.list}
-          <div className="hint">Saran diurutkan dari yang terakhir dipakai tim, supaya penulisan nama klien seragam.</div>
           <div className="err">Isi nama perusahaan.</div>
         </div>
 
@@ -162,7 +178,6 @@ export function NewEntryForm() {
             <input id="paxIn" placeholder="Ketik nama, Enter untuk menambah" {...paxAc.inputProps} />
           </div>
           {paxAc.list}
-          <div className="hint">Nama sesuai paspor/KTP. Pax yang pernah dipakai untuk perusahaan ini muncul paling atas.</div>
           <div className="err">Tambahkan minimal satu pax.</div>
         </div>
 
@@ -225,6 +240,17 @@ export function NewEntryForm() {
           <div className="field">
             <label htmlFor="ttl">Time limit (TTL)</label>
             <input className="inp" id="ttl" type="datetime-local" value={ttl} onChange={(e) => setTtl(e.target.value)} />
+            {ttl && (() => {
+              const urg = ttlUrgency(ttl);
+              const display = fmtTtlDisplay(ttl);
+              return (
+                <div style={{ marginTop: 4, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span className="code" style={{ color: "var(--muted)" }}>{display}</span>
+                  {urg === "red"   && <span style={{ background: "#e11d48", color: "#fff", fontWeight: 800, fontSize: 10, padding: "1px 6px" }}>MERAH — &lt;1 JAM</span>}
+                  {urg === "amber" && <span style={{ background: "#f59e0b", color: "#fff", fontWeight: 800, fontSize: 10, padding: "1px 6px" }}>ORANGE — &lt;3 JAM</span>}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -265,10 +291,6 @@ export function NewEntryForm() {
               <label htmlFor="acctName">Atas nama</label>
               <input className="inp" id="acctName" value={acctName} onChange={(e) => setAcctName(e.target.value)} />
               <div className="hint">Terisi otomatis dari data vendor. Ubah kalau vendor minta ke rekening lain.</div>
-            </div>
-            <div className="field">
-              <label htmlFor="note">Catatan untuk AP</label>
-              <input className="inp" id="note" placeholder="Opsional, misal: TTL jam 14.00" value={note} onChange={(e) => setNote(e.target.value)} />
             </div>
             <label className="switch">
               <input type="checkbox" checked={urgent} onChange={(e) => setUrgent(e.target.checked)} />
