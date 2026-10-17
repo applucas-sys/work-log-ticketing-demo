@@ -96,6 +96,8 @@ function Shell() {
     <UiContext.Provider value={ui}>
       <header className="topbar">
         <div className="brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="US Travel logo" style={{ width: 36, height: 36, objectFit: "contain", flexShrink: 0 }} />
           US Travel
           <small>WORK LOG TICKETING</small>
         </div>

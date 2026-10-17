@@ -108,11 +108,7 @@ export function StaffView({
     <>
       <div className="view-head">
         <div className="grow">
-          <h1>Work Log — {cap(me)}</h1>
-          <p>
-            {active.length ? <><b>{active.length}</b> tugas aktif</> : "Tidak ada tugas aktif"}.
-            {" "}Urgent selalu di atas.
-          </p>
+          <h1>Work Log</h1>
         </div>
       </div>
 
