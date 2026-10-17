@@ -108,6 +108,7 @@ export function StaffView({
     <>
       <div className="view-head" style={{ alignItems: "center" }}>
         <h1 style={{ margin: 0 }}>Work Log</h1>
+        <span style={{ width: 2, alignSelf: "stretch", background: "var(--bdr)", borderRadius: 1, margin: "0 4px" }} aria-hidden="true" />
         <div className="staff-sel-row" style={{ margin: 0 }}>
           Masuk sebagai
           <select
