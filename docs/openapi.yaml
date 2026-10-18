@@ -1,0 +1,513 @@
+openapi: 3.0.3
+info:
+  title: US Travel Work Log API
+  version: 1.0.0
+  description: |
+    REST API for the US Travel ticketing work log.
+    Import into Postman: Import → Link / File → select this file.
+    View in browser: paste into https://editor.swagger.io
+
+servers:
+  - url: https://your-domain.com/api
+    description: Production
+  - url: http://localhost:3000/api
+    description: Local dev (Next.js API routes)
+
+# ── Security ──────────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT          # issued by Supabase Auth / NextAuth
+
+  schemas:
+
+    Role:
+      type: string
+      enum: [staff, ap, spv, finance]
+
+    Product:
+      type: string
+      enum: [intl, dom, kai, whoosh]
+      description: intl=Pesawat Internasional, dom=Pesawat Domestik, kai=Kereta KAI, whoosh=Whoosh
+
+    PayMethod:
+      type: string
+      enum: [credit, ap]
+
+    Stage:
+      type: string
+      enum: [waitap, revise, toissue, toinvoice, done]
+
+    ApStatus:
+      type: string
+      enum: [waiting, paid, revise]
+
+    FileRef:
+      type: object
+      properties:
+        id:   { type: string, format: uuid }
+        name: { type: string, example: invoice-vendor.pdf }
+        url:  { type: string, format: uri }
+
+    LogEntry:
+      type: object
+      properties:
+        id:              { type: string, format: uuid }
+        actor_name:      { type: string }
+        message:         { type: string }
+        is_post_payment: { type: boolean }
+        logged_at:       { type: string, format: date-time }
+
+    ApRequest:
+      type: object
+      properties:
+        id:             { type: string, format: uuid }
+        status:         { $ref: '#/components/schemas/ApStatus' }
+        bank:           { type: string, example: BCA }
+        acct:           { type: string, example: "1270001192" }
+        acct_name:      { type: string, example: PT Wismar Tour }
+        invoice_file:   { $ref: '#/components/schemas/FileRef' }
+        proof_file:     { $ref: '#/components/schemas/FileRef' }
+        revise_note:    { type: string }
+        requested_at:   { type: string, format: date-time }
+        paid_at:        { type: string, format: date-time, nullable: true }
+
+    Reservation:
+      type: object
+      properties:
+        id:          { type: string, format: uuid }
+        display_id:  { type: string, example: TK-1234 }
+        staff_id:    { type: string, format: uuid }
+        staff_name:  { type: string, example: David }
+        company:     { type: string, example: PT Sinar Palma Lestari }
+        passengers:
+          type: array
+          items: { type: string }
+          example: [ANDI PRASETYO, RINA HARTIKA]
+        product:     { $ref: '#/components/schemas/Product' }
+        vendor:      { type: string, example: Jontru }
+        carrier:     { type: string, example: SQ }
+        pnr:         { type: string, example: 7KQXMB }
+        route:       { type: string, example: CGK-SIN }
+        travel_date: { type: string, format: date-time }
+        ttl:         { type: string, format: date-time, nullable: true }
+        amount:      { type: integer, example: 14850000, description: IDR, whole rupiah }
+        pay_method:  { $ref: '#/components/schemas/PayMethod' }
+        urgent:      { type: boolean }
+        stage:       { $ref: '#/components/schemas/Stage' }
+        ticket_no:   { type: string, nullable: true }
+        issued_at:   { type: string, format: date-time, nullable: true }
+        invoice_no:  { type: string, nullable: true }
+        invoiced_at: { type: string, format: date-time, nullable: true }
+        ap:          { $ref: '#/components/schemas/ApRequest', nullable: true }
+        log:
+          type: array
+          items: { $ref: '#/components/schemas/LogEntry' }
+        created_at:  { type: string, format: date-time }
+        updated_at:  { type: string, format: date-time }
+
+    User:
+      type: object
+      properties:
+        id:           { type: string, format: uuid }
+        email:        { type: string, format: email }
+        display_name: { type: string, example: David }
+        role:         { $ref: '#/components/schemas/Role' }
+
+    Error:
+      type: object
+      properties:
+        error:   { type: string }
+        message: { type: string }
+
+security:
+  - BearerAuth: []
+
+# ── Paths ─────────────────────────────────────────────────────
+paths:
+
+  # ── AUTH ────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email + password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:    { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: JWT token + user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user:  { $ref: '#/components/schemas/User' }
+        '401':
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current logged-in user
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Invalidate session token
+      responses:
+        '204': { description: Logged out }
+
+  # ── RESERVATIONS ────────────────────────────────────────────
+  /reservations:
+    get:
+      tags: [Reservations]
+      summary: List reservations (filtered by role automatically)
+      description: |
+        Staff → sees only their own records.
+        AP / SPV / Finance → sees all records.
+      parameters:
+        - name: stage
+          in: query
+          schema: { $ref: '#/components/schemas/Stage' }
+        - name: staff_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: urgent
+          in: query
+          schema: { type: boolean }
+        - name: q
+          in: query
+          description: Free-text search (company, pax, PNR)
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 200 }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Reservation' }
+                  total: { type: integer }
+                  page:  { type: integer }
+
+    post:
+      tags: [Reservations]
+      summary: Create new reservation (Staff only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [company, passengers, product, vendor, pnr, amount, pay_method]
+              properties:
+                company:     { type: string }
+                passengers:  { type: array, items: { type: string }, minItems: 1 }
+                product:     { $ref: '#/components/schemas/Product' }
+                vendor:      { type: string }
+                carrier:     { type: string }
+                pnr:         { type: string }
+                route:       { type: string }
+                travel_date: { type: string, format: date-time }
+                ttl:         { type: string, format: date-time, nullable: true }
+                amount:      { type: integer }
+                pay_method:  { $ref: '#/components/schemas/PayMethod' }
+                urgent:      { type: boolean, default: false }
+                # AP fields (required when pay_method = ap)
+                bank:        { type: string }
+                acct:        { type: string }
+                acct_name:   { type: string }
+                invoice_file_id: { type: string, format: uuid, description: Upload file first via POST /files }
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+        '403':
+          description: Only staff role can create reservations
+
+  /reservations/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+
+    get:
+      tags: [Reservations]
+      summary: Get single reservation with full detail
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+        '404': { description: Not found }
+
+    patch:
+      tags: [Reservations]
+      summary: Edit reservation fields (Staff owner or SPV)
+      description: |
+        Allowed fields: company, carrier, route, pnr, amount, ttl.
+        All changes are appended to the audit log.
+        Edits after AP payment are flagged with ⚠ in the log.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                company:  { type: string }
+                carrier:  { type: string }
+                route:    { type: string }
+                pnr:      { type: string }
+                amount:   { type: integer }
+                ttl:      { type: string, format: date-time, nullable: true }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+        '403': { description: Not the owner or SPV }
+
+  /reservations/{id}/issue:
+    post:
+      tags: [Reservations]
+      summary: Mark ticket as issued (Staff owner only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ticket_no:  { type: string, description: Optional for LCC }
+                issued_at:  { type: string, format: date-time, description: Defaults to now }
+      responses:
+        '200':
+          description: Stage moves to toinvoice
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+        '409': { description: Already issued or AP not yet paid }
+
+  /reservations/{id}/invoice:
+    post:
+      tags: [Reservations]
+      summary: Mark as invoiced → moves to archive (Staff owner only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invoice_no]
+              properties:
+                invoice_no: { type: string, example: INV/US/2510/001 }
+      responses:
+        '200':
+          description: Stage moves to done
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+
+  /reservations/{id}/resubmit:
+    post:
+      tags: [Reservations]
+      summary: Staff resubmits AP request after revision
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                invoice_file_id: { type: string, format: uuid, description: New invoice file if replaced }
+      responses:
+        '200':
+          description: AP status back to waiting
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+
+  # ── AP ACTIONS ──────────────────────────────────────────────
+  /reservations/{id}/ap/pay:
+    post:
+      tags: [AP]
+      summary: AP marks transfer as paid (AP role only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [proof_file_id]
+              properties:
+                proof_file_id: { type: string, format: uuid }
+      responses:
+        '200':
+          description: AP status → paid; reservation stage → toissue
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+        '403': { description: AP role required }
+
+  /reservations/{id}/ap/revise:
+    post:
+      tags: [AP]
+      summary: AP returns request to staff for correction (AP role only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [note]
+              properties:
+                note: { type: string, description: Reason shown to staff }
+      responses:
+        '200':
+          description: AP status → revise; reservation stage → revise
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Reservation' }
+
+  # ── FILES ───────────────────────────────────────────────────
+  /files:
+    post:
+      tags: [Files]
+      summary: Upload a file (returns file ID to attach to reservation)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FileRef' }
+        '413': { description: File too large (max 10 MB) }
+
+  /files/{id}:
+    get:
+      tags: [Files]
+      summary: Get signed download URL for a file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:        { type: string, format: uri }
+                  expires_at: { type: string, format: date-time }
+
+  # ── USERS ───────────────────────────────────────────────────
+  /users:
+    get:
+      tags: [Users]
+      summary: List all users (SPV / Finance / AP only)
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/User' }
+
+  /users/{id}:
+    patch:
+      tags: [Users]
+      summary: Update user display name or role (SPV only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name: { type: string }
+                role:         { $ref: '#/components/schemas/Role' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+
+# ── Tags ──────────────────────────────────────────────────────
+tags:
+  - name: Auth
+    description: Login, logout, current user
+  - name: Reservations
+    description: Core CRUD + workflow transitions (issue, invoice, resubmit)
+  - name: AP
+    description: AP-only actions — mark paid or return for revision
+  - name: Files
+    description: Upload / download invoice and payment proof files
+  - name: Users
+    description: User management (SPV role)
