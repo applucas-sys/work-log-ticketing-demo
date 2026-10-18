@@ -20,14 +20,17 @@ interface State {
 type Action =
   | { type: "init"; now: number }
   | { type: "create"; input: NewReservationInput; staff: string; at: number }
-  | { type: "issue"; id: string; ticketNo: string; at: number }
+  | { type: "issue"; id: string; ticketNo: string; issuedAt: number; at: number }
   | { type: "invoice"; id: string; invoiceNo: string; at: number }
   | { type: "pay"; id: string; proof: FileRef; by: string; at: number }
   | { type: "revise"; id: string; note: string; by: string; at: number }
   | { type: "resubmit"; id: string; at: number }
   | { type: "replaceInvoice"; id: string; file: FileRef; at: number }
   | { type: "toggleUrgent"; id: string; at: number }
-  | { type: "log"; id: string; who: string; msg: string; at: number };
+  | { type: "log"; id: string; who: string; msg: string; at: number }
+  | { type: "editFields"; id: string; patch: EditPatch; who: string; postPayment: boolean; at: number };
+
+type EditPatch = Partial<Pick<Reservation, "company" | "carrier" | "route" | "pnr" | "ttl" | "amount">>;
 
 function update(state: State, id: string, fn: (r: Reservation) => Reservation): State {
   return { ...state, records: state.records.map((r) => (r.id === id ? fn(r) : r)) };
@@ -73,7 +76,22 @@ function reducer(state: State | null, a: Action): State | null {
       return { ...state, seq: state.seq + 1, records: [...state.records, r] };
     }
     case "issue":
-      return update(state, a.id, (r) => ({ ...r, issuedAt: a.at, ticketNo: a.ticketNo, log: [...r.log, { t: a.at, who: r.staff, msg: "Tiket issued" }] }));
+      return update(state, a.id, (r) => ({ ...r, issuedAt: a.issuedAt, ticketNo: a.ticketNo, log: [...r.log, { t: a.at, who: r.staff, msg: "Tiket issued" }] }));
+    case "editFields": {
+      return update(state, a.id, (r) => {
+        const p = a.patch;
+        const parts: string[] = [];
+        if (p.company !== undefined && p.company !== r.company) parts.push(`Perusahaan: "${r.company}" → "${p.company}"`);
+        if (p.carrier !== undefined && p.carrier !== r.carrier) parts.push(`Operator: ${r.carrier} → ${p.carrier}`);
+        if (p.route   !== undefined && p.route   !== r.route)   parts.push(`Rute: ${r.route} → ${p.route}`);
+        if (p.pnr     !== undefined && p.pnr     !== r.pnr)     parts.push(`PNR: ${r.pnr} → ${p.pnr}`);
+        if (p.amount  !== undefined && p.amount  !== r.amount)  parts.push(`Nilai: ${r.amount} → ${p.amount}`);
+        if (p.ttl     !== undefined && p.ttl     !== r.ttl)     parts.push("TTL diperbarui");
+        if (!parts.length) return r;
+        const msg = (a.postPayment ? "⚠ Edit setelah pembayaran — " : "Edit: ") + parts.join("; ");
+        return { ...r, ...p, log: [...r.log, { t: a.at, who: a.who, msg }] };
+      });
+    }
     case "invoice":
       return update(state, a.id, (r) => ({ ...r, invoicedAt: a.at, invoiceNo: a.invoiceNo, log: [...r.log, { t: a.at, who: r.staff, msg: "Invoice " + a.invoiceNo + " dibuat" }] }));
     case "pay":
@@ -101,7 +119,7 @@ function reducer(state: State | null, a: Action): State | null {
 
 export interface StoreActions {
   create: (input: NewReservationInput, staff: string) => void;
-  issue: (id: string, ticketNo: string) => void;
+  issue: (id: string, ticketNo: string, issuedAt?: number) => void;
   invoice: (id: string, invoiceNo: string) => void;
   pay: (id: string, proof: FileRef, by: string) => void;
   revise: (id: string, note: string, by: string) => void;
@@ -109,6 +127,7 @@ export interface StoreActions {
   replaceInvoice: (id: string, file: FileRef) => void;
   toggleUrgent: (id: string) => void;
   log: (id: string, who: string, msg: string) => void;
+  editFields: (id: string, patch: Partial<Pick<Reservation, "company" | "carrier" | "route" | "pnr" | "ttl" | "amount">>, who: string, postPayment: boolean) => void;
 }
 
 interface StoreValue {
@@ -170,7 +189,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     return {
       create: (input, staff) => dispatch({ type: "create", input, staff, at: at() }),
-      issue: (id, ticketNo) => dispatch({ type: "issue", id, ticketNo, at: at() }),
+      issue: (id, ticketNo, issuedAt) => { const t = at(); dispatch({ type: "issue", id, ticketNo, issuedAt: issuedAt ?? t, at: t }); },
       invoice: (id, invoiceNo) => dispatch({ type: "invoice", id, invoiceNo, at: at() }),
       pay: (id, proof, by) => dispatch({ type: "pay", id, proof, by, at: at() }),
       revise: (id, note, by) => dispatch({ type: "revise", id, note, by, at: at() }),
@@ -178,6 +197,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       replaceInvoice: (id, file) => dispatch({ type: "replaceInvoice", id, file, at: at() }),
       toggleUrgent: (id) => dispatch({ type: "toggleUrgent", id, at: at() }),
       log: (id, who, msg) => dispatch({ type: "log", id, who, msg, at: at() }),
+      editFields: (id, patch, who, postPayment) => dispatch({ type: "editFields", id, patch, who, postPayment, at: at() }),
     };
   }, []);
 

@@ -25,11 +25,11 @@ export function Drawer({ open, labelId, children }: { open: boolean; labelId: st
   );
 }
 
-export function DrawerHead({ eyebrow, title, labelId, onClose, children }: { eyebrow: ReactNode; title: ReactNode; labelId: string; onClose: () => void; children?: ReactNode }) {
+export function DrawerHead({ eyebrow, title, labelId, onClose, children }: { eyebrow?: ReactNode; title: ReactNode; labelId: string; onClose: () => void; children?: ReactNode }) {
   return (
     <div className="d-head">
       <div>
-        <div className="sub">{eyebrow}</div>
+        {eyebrow && <div className="sub">{eyebrow}</div>}
         <h2 id={labelId}>{title}</h2>
         {children}
       </div>

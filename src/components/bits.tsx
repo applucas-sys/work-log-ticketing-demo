@@ -132,6 +132,22 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
   );
 }
 
+export type StatItem = { n: number | string; label: string; sub?: string; accent?: "red" | "amber" | "green" | "blue" };
+
+export function StatCards({ items }: { items: StatItem[] }) {
+  return (
+    <div className="stats">
+      {items.map((item) => (
+        <div key={item.label} className="stat">
+          <div className={"stat-n" + (item.accent ? " " + item.accent : "")}>{item.n}</div>
+          <div className="stat-label">{item.label}</div>
+          {item.sub && <div className="stat-sub">{item.sub}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function FileButton({ file, label }: { file: FileRef | null; label: string }) {
   const { toast } = useUi();
   if (!file)
