@@ -81,7 +81,6 @@ export function SpvView({ query, setQuery }: { query: string; setQuery: (q: stri
 
   const active  = records.filter((r) => stage(r) !== "done");
   const archive = records.filter((r) => stage(r) === "done");
-  const stuck   = active.filter((r) => stuckReason(r, now));
   const urgent  = active.filter((r) => r.urgent);
 
   const base = tab === "active" ? [...active].sort(sortWork) : [...archive].sort((a, b) => (b.invoicedAt ?? 0) - (a.invoicedAt ?? 0));
@@ -101,18 +100,11 @@ export function SpvView({ query, setQuery }: { query: string; setQuery: (q: stri
       <div className="view-head">
         <div className="grow">
           <h1>Pantauan Tim</h1>
-          <p>
-            {stuck.length > 0
-              ? <><b className="text-urgent">{stuck.length} tugas nyangkut</b> — perlu tindakan.</>
-              : "Tidak ada tugas yang nyangkut."}
-            {" "}{urgent.length > 0 && <><b>{urgent.length}</b> urgent.</>}
-          </p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="stats">
-        <div className="stat"><div className={"stat-n" + (stuck.length > 0 ? " red" : "")}>{stuck.length}</div><div className="stat-label">Tugas nyangkut</div></div>
         <div className="stat"><div className={"stat-n" + (urgent.length > 0 ? " amber" : "")}>{urgent.length}</div><div className="stat-label">Urgent aktif</div></div>
         <div className="stat"><div className="stat-n">{active.length}</div><div className="stat-label">Total tugas aktif</div></div>
         <div className="stat"><div className="stat-n blue">{STAFF.length}</div><div className="stat-label">Staf dalam tim</div></div>

@@ -107,9 +107,7 @@ export function ApView({ query, setQuery }: { query: string; setQuery: (q: strin
       {/* Stats */}
       <div className="stats">
         <div className="stat"><div className={"stat-n" + (queue.length > 0 ? " blue" : "")}>{queue.length}</div><div className="stat-label">Menunggu dibayar</div></div>
-        <div className="stat"><div className={"stat-n" + (total > 0 ? " amber" : "")} style={{ fontSize: 18 }}>{rp(total)}</div><div className="stat-label">Total antrian</div></div>
         <div className="stat"><div className={"stat-n" + (urgent > 0 ? " red" : "")}>{urgent}</div><div className="stat-label">Urgent — dahulukan</div></div>
-        <div className="stat"><div className={"stat-n" + (back.length > 0 ? " red" : "")}>{back.length}</div><div className="stat-label">Dikembalikan ke staf</div></div>
       </div>
 
       {/* Tabs */}

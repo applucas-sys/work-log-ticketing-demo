@@ -6,7 +6,7 @@ import { ago, fmtDate, fmtDateTime, formatNumber, rp } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import type { PipState } from "@/lib/types";
 import { isUrgentOpen, stage, stuckReason } from "@/lib/workflow";
-import { CopyButton, FileButton, Pip, StageTag } from "./bits";
+import { CopyButton, FileButton, Pip } from "./bits";
 import { FileDrop } from "./file-drop";
 import { DrawerHead } from "./ui/overlay";
 import { useUi } from "./ui-context";
@@ -116,9 +116,8 @@ export function DetailPanel({ id }: { id: string }) {
 
   return (
     <>
-      <DrawerHead eyebrow={`${r.id}, dibuat ${ago(r.createdAt, now)}`} title={r.pax.join(", ")} labelId="d-title" onClose={closeDrawer}>
+      <DrawerHead title={r.pax.join(", ")} labelId="d-title" onClose={closeDrawer}>
         <div className="tagline">
-          <StageTag r={r} />
           {isUrgentOpen(r) && <span className="tag red">Urgent</span>}
           {postPayment && editing && <span className="tag amber">Edit setelah pembayaran</span>}
         </div>

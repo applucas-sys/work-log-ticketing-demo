@@ -41,7 +41,6 @@ export function FinanceView({ query, setQuery }: { query: string; setQuery: (q: 
     .sort((a, b) => (a.issuedAt ?? 0) - (b.issuedAt ?? 0));
 
   const total    = uninvoiced.reduce((s, r) => s + r.amount, 0);
-  const oldest   = uninvoiced.length ? Math.max(...uninvoiced.map(age)) : 0;
   const paidWeek = records.filter((r) => r.ap?.status === "paid" && r.ap.paidAt && now - r.ap.paidAt < 7 * D).reduce((s, r) => s + r.amount, 0);
   const apProc   = records.filter((r) => r.ap && r.ap.status !== "paid" && !r.issuedAt).reduce((s, r) => s + r.amount, 0);
 
@@ -64,11 +63,7 @@ export function FinanceView({ query, setQuery }: { query: string; setQuery: (q: 
     <>
       <div className="view-head">
         <div className="grow">
-          <h1>Tiket Issued — Belum Diinvoice</h1>
-          <p>
-            <b>{uninvoiced.length}</b> reservasi senilai <b>{rp(total)}</b> sudah issued
-            {uninvoiced.length > 0 && <>, paling lama <b>{dur(oldest)}</b></>}.
-          </p>
+          <h1>Dashboard Laporan Keuangan</h1>
         </div>
         <button className="btn" onClick={() => { downloadCsv(uninvoiced); toast("CSV belum invoice diunduh."); }}>
           <IconDownload /> Unduh CSV
