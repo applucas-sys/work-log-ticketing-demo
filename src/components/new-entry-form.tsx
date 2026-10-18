@@ -245,8 +245,8 @@ export function NewEntryForm() {
               return (
                 <div style={{ marginTop: 4, fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
                   <span className="code" style={{ color: "var(--muted)" }}>{display}</span>
-                  {urg === "red"   && <span style={{ background: "#e11d48", color: "#fff", fontWeight: 800, fontSize: 10, padding: "1px 6px" }}>MERAH — &lt;1 JAM</span>}
-                  {urg === "amber" && <span style={{ background: "#f59e0b", color: "#fff", fontWeight: 800, fontSize: 10, padding: "1px 6px" }}>ORANGE — &lt;3 JAM</span>}
+                  {urg === "red"   && <span style={{ background: "#e11d48", color: "#fff", fontWeight: 800, fontSize: 10, padding: "1px 6px" }}>URGENT — &lt;1 JAM</span>}
+                  {urg === "amber" && <span style={{ background: "#f59e0b", color: "#fff", fontWeight: 800, fontSize: 10, padding: "1px 6px" }}>URGENT — &lt;3 JAM</span>}
                 </div>
               );
             })()}
